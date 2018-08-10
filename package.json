@@ -1,0 +1,22 @@
+{
+  "name": "cesium-3d-tiler",
+  "version": "1.0.0",
+  "description": "experimental map tiler to convert large meshes into cesium 3d tilesets",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Stonelinks/cesium-3d-tiler.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Stonelinks/cesium-3d-tiler/issues"
+  },
+  "homepage": "https://github.com/Stonelinks/cesium-3d-tiler#readme",
+  "dependencies": {
+    "obj2gltf": "^2.2.0"
+  }
+}

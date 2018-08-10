@@ -14,7 +14,7 @@ import trimesh
 trimesh.util.attach_to_log()
 
 import tiler.config as config
-from tiler.utils import timeit
+from tiler.utils import timeit, check_call
 
 
 class Worker(Thread):
@@ -78,14 +78,15 @@ def run_tiler():
 
     # this function is useful for final cropping
     def crop_to_mesh_extents(target_script, mesh=world):
+        buffer = config.TILE_CROPPING_BUFFER if mesh != world else 0
         min_bounds = mesh.bounds[0]
         max_bounds = mesh.bounds[1]
-        min_x = min_bounds[0]
-        max_x = max_bounds[0]
-        min_y = min_bounds[1]
-        max_y = max_bounds[1]
-        min_z = min_bounds[2]
-        max_z = max_bounds[2]
+        min_x = min_bounds[0] - buffer
+        max_x = max_bounds[0] + buffer
+        min_y = min_bounds[1] - buffer
+        max_y = max_bounds[1] + buffer
+        min_z = min_bounds[2] - buffer
+        max_z = max_bounds[2] + buffer
         sel_func = f'(x < {min_x}) || (x > {max_x}) || (y < {min_y}) || (y > {max_y}) || (z < {min_z}) || (z > {max_z})'
         mlx.select.vert_function(target_script, function=sel_func)
         mlx.delete.selected(target_script, face=False, vert=True)
@@ -115,22 +116,20 @@ def run_tiler():
                             preserve_topology=True, quality_weight=False, autoclean=True)
         crop_to_mesh_extents(debug_simple_mesh_script)
         debug_simple_mesh_script.run_script()
-    # pool.add_task(create_debug_simple_mesh)
+    pool.add_task(create_debug_simple_mesh)
 
     # block until initial simplification is done
     pool.wait_completion()
 
-    # whole layers, where tiles get cropped from
-    layers = []
+    for layer_index in range(config.NUM_LAYERS):
 
-    def create_full_layer_mesh(layer_index):
         k = math.log(config.SIMPLIFICATION_MAX /
                      config.SIMPLIFICATION_MIN) / config.NUM_LAYERS
         percentage = config.SIMPLIFICATION_MIN * \
             math.exp(k * (layer_index + 1))
 
-        layer_mesh_file_path = os.path.join(
-            output_path, f'layer_full_{layer_index}.obj')
+        # layer_mesh_file_path = os.path.join(
+        # output_path, f'layer_full_{layer_index}.obj')
         # layer_mesh_script = mlx.FilterScript(
         #     file_in=debug_simple_mesh_file_path, file_out=layer_mesh_file_path)
         # mlx.remesh.simplify(layer_mesh_script, texture=True, target_perc=percentage,
@@ -141,33 +140,37 @@ def run_tiler():
         # crop_to_mesh_extents(layer_mesh_script)
         # layer_mesh_script.run_script()
 
-        layers.append((layer_index, layer_mesh_file_path))
-
-    for layer_index in range(config.NUM_LAYERS):
-        pool.add_task(create_full_layer_mesh, layer_index)
-    pool.wait_completion()
-
-    for (layer_index, layer_mesh_file_path) in layers:
-        layer_mesh = trimesh.load(layer_mesh_file_path)
         voxel_pitch = world_size / 2
         for _ in range(layer_index):
             voxel_pitch = voxel_pitch / 2
-        layer_mesh_voxels = layer_mesh.voxelized(voxel_pitch)
-        voxel_origin = layer_mesh_voxels.origin
+        world_voxels = world.voxelized(voxel_pitch)
+        voxel_origin = world_voxels.origin
 
         def create_tile(tile_file_path, tile_mesh):
             tile_mesh_script = mlx.FilterScript(
-                file_in=layer_mesh_file_path, file_out=tile_file_path)
+                file_in=debug_simple_mesh_file_path, file_out=tile_file_path)
             crop_to_mesh_extents(tile_mesh_script, mesh=tile_mesh)
+            mlx.remesh.simplify(tile_mesh_script, texture=True, target_perc=percentage,
+                                quality_thr=config.SIMPLIFICATION_MESH_QUALITY, preserve_boundary=True, boundary_weight=config.SIMPLIFICATION_EDGE_WEIGHT,
+                                optimal_placement=True, preserve_normal=True,
+                                planar_quadric=True, selected=False, extra_tex_coord_weight=config.SIMPLIFICATION_TEXTURE_WEIGHT,
+                                preserve_topology=True, quality_weight=False, autoclean=True)
+
+            # sanity check
+            crop_to_mesh_extents(tile_mesh_script)
+
             tile_mesh_script.run_script()
 
-        for tile_coords in layer_mesh_voxels.sparse_surface:
+            # convert to gltf
+            check_call([config.OBJ2GLTF_PATH, '-i',
+                        tile_file_path, '-o', tile_file_path.replace('.obj', '.gltf')], cwd=output_path)
+
+        for tile_coords in world_voxels.sparse_surface:
 
             # this is the most ass-backwards way of coming up with the single tile mesh...
             dense_bool_matrix = trimesh.voxel.sparse_to_matrix([tile_coords])
             coords_matrix = trimesh.voxel.matrix_to_points(
                 dense_bool_matrix, voxel_pitch, voxel_origin)
-
             tile_mesh = trimesh.voxel.multibox(
                 coords_matrix, voxel_pitch)
 
