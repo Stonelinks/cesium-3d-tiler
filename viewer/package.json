@@ -1,22 +1,45 @@
 {
-  "name": "viewer",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "cesium": "^1.48.0",
-    "cesium-react": "^0.2.1",
-    "react": "^16.4.2",
-    "react-dom": "^16.4.2",
-    "react-scripts": "1.1.4"
+  "name": "cesium-webpack-example",
+  "version": "1.0.0",
+  "description": "The minimal recomended setup for an app using Cesium with Webpack.",
+  "main": "index.js",
+  "keywords": [
+    "cesium",
+    "webpack",
+    "example"
+  ],
+  "author": {
+    "name": "Analytical Graphics, Inc.",
+    "url": "https://www.agi.com"
+  },
+  "homepage": "https://cesiumjs.org",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.0.0-rc.1",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.2",
+    "babel-preset-react-app": "^3.1.2",
+    "copy-webpack-plugin": "^4.0.1",
+    "css-loader": "^0.28.7",
+    "html-webpack-plugin": "^2.30.1",
+    "prettier": "1.12.1",
+    "strip-pragma-loader": "^1.0.0",
+    "style-loader": "^0.18.2",
+    "uglifyjs-webpack-plugin": "^1.0.0-beta.3",
+    "url-loader": "^0.6.2",
+    "webpack": "^3.12.0",
+    "webpack-dev-server": "^2.9.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject",
-    "lint": "prettier --write --no-semi **/*.js"
+    "build": "webpack --config webpack.config.js",
+    "start": "webpack-dev-server --config webpack.config.js --hot",
+    "release": "webpack --config webpack.release.config.js",
+    "serve-release": "webpack-dev-server --config webpack.release.config.js --content-base /dist",
+    "lint": "prettier --write --no-semi *.js **/*.js"
   },
-  "devDependencies": {
-    "prettier": "^1.14.2"
+  "dependencies": {
+    "cesium": "^1.41.0",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0"
   }
 }

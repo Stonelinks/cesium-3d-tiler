@@ -4,7 +4,10 @@ import sys
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 DATA_PATH = os.path.join(ROOT_PATH, '..', 'data')
-OBJ2GLTF_PATH = os.path.join(ROOT_PATH, '..', 'node_modules', '.bin', 'obj2gltf')
+OBJ2GLTF_PATH = os.path.join(
+    ROOT_PATH, '..', 'node_modules', '.bin', 'obj2gltf')
+GLTF_OPTIMIZE_PATH = os.path.join(
+    ROOT_PATH, '..', 'node_modules', '.bin', 'gltf-pipeline')
 
 NUM_LAYERS = 5
 NUM_THREADS = 4
@@ -28,7 +31,7 @@ SIMPLIFICATION_TEXTURE_WEIGHT = 100.0
 Minimum bound of points to keep on lowest quality zoom layer (the big tiles)
 The value is in the range [0..1]
 """
-SIMPLIFICATION_MIN = 0.2
+SIMPLIFICATION_MIN = 0.1
 
 """
 Maximum bound of points to keep on highest quality zoom layer (the small tiles)
@@ -36,8 +39,12 @@ The value is in the range [0..1]
 """
 SIMPLIFICATION_MAX = 0.8
 
-
 """
-Amount to buffer when cropping tiles
+Amount to buffer when cropping tiles (meters?)
 """
 TILE_CROPPING_BUFFER = 10
+
+"""
+Skip generating certain files if they exist. Really only useful for development.
+"""
+USE_CACHED_FILES = True

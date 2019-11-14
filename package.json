@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/Stonelinks/cesium-3d-tiler#readme",
   "dependencies": {
+    "gltf-pipeline": "^1.0.5",
     "obj2gltf": "^2.2.0"
   }
 }
